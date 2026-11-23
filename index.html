@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090b0d">
+    <meta name="description" content="Cofre Secreto inspirado no clima de Resident Evil 2, agora com fases, chuva animada e roda aprimorada.">
+    <title>Resident Evil 2 — Cofre Secreto</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="polimento.css">
+    <script src="regras.js" defer></script>
+    <script src="chuva.js" defer></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <main id="jogo" class="jogo" aria-label="Jogo do cofre secreto">
+        <div class="cenario" aria-hidden="true">
+            <img id="imagemFechada" class="foto-cofre foto-fechado" src="imagens/waiting-room-base.webp" alt="">
+            <img id="imagemAberta" class="foto-cofre foto-aberto" src="imagens/waiting-room-aberto.png" alt="">
+            <div class="sombra-cenario"></div>
+            <div class="luminaria-falhando"></div>
+            <div id="mascaraAbertura" class="mascara-abertura"></div>
+        </div>
+
+        <div id="aberturaCena" class="abertura-cena" hidden aria-live="polite">
+            <span class="abertura-sinal" aria-hidden="true"></span>
+            <span id="aberturaTexto">TRAVA DESBLOQUEADA</span>
+            <small>R.P.D. / ACESSO CONCEDIDO</small>
+        </div>
+        <div class="grao" aria-hidden="true"></div>
+        <div class="alerta-vinheta" aria-hidden="true"></div>
+
+        <header class="barra-superior">
+            <div class="localizacao">
+                <span class="led"></span>
+                <span id="textoArea">R.P.D.</span>
+                <span class="separador">/</span>
+                <span id="textoSala">SALA DE ESPERA</span>
+                <span class="separador">/</span>
+                <span id="textoAndar">2º ANDAR</span>
+            </div>
+            <div class="acoes-topo">
+                <div class="fase-badge">FASE <strong id="faseBadgeNumero">01</strong><small id="faseBadgeTotal">/03</small></div>
+                <button id="botaoSom" class="botao-som" type="button" aria-label="Desativar áudio" aria-pressed="true">ÁUDIO: LIGADO</button>
+            </div>
+        </header>
+
+
+        <section class="painel" aria-labelledby="tituloPainel">
+            <div class="marca-secao"><span class="pequeno-triangulo"></span> DOCUMENTO / OPERAÇÃO ESPECIAL</div>
+            <h1 id="tituloPainel">COFRE <span>SECRETO</span></h1>
+            <div class="risco"></div>
+            <p class="objetivo">Descubra a senha entre 1 e 50 em até 7 tentativas. Cada erro revela uma pista.</p>
+
+            <div class="bloco-cenario">
+                <div class="bloco-cenario-topo">
+                    <span>CENÁRIO ATUAL</span>
+                    <strong id="nomeFasePainel">SALA DE ESPERA</strong>
+                </div>
+                <p id="descricaoFase" class="descricao-fase">Cofre no 2º andar da delegacia, inspirado na Waiting Room.</p>
+                <div class="meta-fase">
+                    <span id="localFasePainel">R.P.D. / EAST WING</span>
+
+                </div>
+            </div>
+
+            <div class="comandos-roda" aria-label="Controles do disco de combinação">
+                <div class="cabecalho-roda">
+                    <span>DISCO DE COMBINAÇÃO</span>
+                    <span class="leitura-roda"><small>POSIÇÃO</small> <output id="numeroRoda">01</output></span>
+                </div>
+                <div class="botoes-roda">
+                    <button id="girarEsquerda" class="botao-giro" type="button" disabled aria-label="Girar o disco um número para a esquerda"><span>◀</span> ESQUERDA <kbd>A</kbd></button>
+                    <button id="girarDireita" class="botao-giro" type="button" disabled aria-label="Girar o disco um número para a direita">DIREITA <span>▶</span> <kbd>D</kbd></button>
+                </div>
+                <button id="botaoInspecionar" class="botao-inspecionar" type="button" disabled>
+                    <span class="lupa-disco" aria-hidden="true">⌕</span> INSPECIONAR O DISCO <span aria-hidden="true">↗</span>
+                </button>
+                <p class="instrucao-roda">Abra a inspeção para girar. A seta indica o número escolhido. Girar não gasta tentativas.</p>
+            </div>
+
+            <details class="arquivo-real" id="arquivoRpd">
+                <summary>ARQUIVO R.P.D. <span>REFERÊNCIA OPCIONAL</span></summary>
+                <p id="referenciaReal">A Waiting Room do RE2 usa uma combinação clássica esquerda-direita-esquerda. Neste minijogo, porém, a senha é sempre sorteada de 1 a 50.</p>
+            </details>
+
+            <form id="formSenha" novalidate>
+                <label for="campoSenha" class="rotulo-input">INSERIR COMBINAÇÃO <span>01 — 50</span></label>
+                <div class="caixa-input">
+                    <span class="simbolo-entrada">&gt;</span>
+                    <input id="campoSenha" name="senha" type="number" min="1" max="50" step="1" inputmode="numeric" placeholder="--" autocomplete="off" aria-describedby="dicaCampo" disabled>
+                    <span class="maximo-input">/ 50</span>
+                </div>
+                <p id="dicaCampo" class="dica-campo">Digite um número inteiro entre 1 e 50.</p>
+                <button id="botaoTentar" class="botao-principal" type="submit" disabled>
+                    <span>TENTAR ABRIR</span><span class="icone-confirmar">↵</span>
+                </button>
+            </form>
+
+            <div class="resultado-area">
+                <p id="mensagem" class="mensagem" role="status" aria-live="polite">Aguardando combinação...</p>
+                <div id="aviso" class="aviso" role="alert" hidden></div>
+            </div>
+
+            <details id="historico" class="registro-historico" hidden>
+                <summary><span>REGISTRO DE TENTATIVAS</span><span id="historicoResumo">01 PALPITE</span></summary>
+                <p id="historicoFaixa" class="historico-faixa">FAIXA POSSÍVEL: 01–50</p>
+                <ol id="historicoLista" class="historico-lista" aria-label="Palpites feitos nesta fase"></ol>
+            </details>
+
+            <div class="info-tentativas">
+                <div class="tentativas-linha">
+                    <span>TENTATIVAS</span>
+                    <strong id="contador">00 <small>/ 07</small></strong>
+                </div>
+                <div id="marcadores" class="marcadores" aria-label="Tentativas utilizadas">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="botoes-finais">
+                <button id="botaoNova" class="botao-secundario" type="button" disabled>REINICIAR FASE <span>↻</span></button>
+                <button id="botaoTrocarFase" class="botao-secundario destaque" type="button" disabled>PRÓXIMA FASE <span>➜</span></button>
+            </div>
+        </section>
+
+        <div id="inspecao" class="inspecao" hidden>
+            <div id="inspecaoFundo" class="inspecao-fundo"></div>
+            <section class="inspecao-caixa" role="dialog" aria-modal="true" aria-labelledby="tituloInspecao">
+                <header class="inspecao-topo">
+                    <div><span class="inspecao-eyebrow">R.P.D. / MECANISMO DE SEGURANÇA</span><h2 id="tituloInspecao">DISCO DE COMBINAÇÃO</h2></div>
+                    <button id="fecharInspecao" type="button" class="inspecao-fechar" aria-label="Fechar inspeção">✕</button>
+                </header>
+                <div class="inspecao-conteudo">
+                    <div class="inspecao-mecanismo">
+                        <span class="inspecao-placa">MECANISMO Nº 01 · 50 POSIÇÕES</span>
+                        <div id="rodaAmpliada" class="roda-interativa roda-ampliada desativada" role="slider" tabindex="-1"
+                            aria-label="Disco de combinação ampliado" aria-valuemin="1" aria-valuemax="50"
+                            aria-valuenow="1" aria-valuetext="Número 1 de 50" aria-disabled="true">
+                            <div class="miolo-roda" aria-hidden="true"></div>
+
+                            <div class="reflexo-roda" aria-hidden="true"></div>
+                        </div>
+                        <small>ARRASTE O DISCO · A / D OU SETAS PARA AJUSTAR</small>
+                    </div>
+                    <div class="inspecao-lateral">
+                        <p class="inspecao-etiqueta">COMBINAÇÃO SELECIONADA</p>
+                        <output id="numeroInspecao" class="inspecao-numero">01</output>
+                        <div class="linha-metal"></div>
+                        <p class="inspecao-ajuda">Gire para escolher um número de 1 a 50. A seta fixa e o visor sempre mostram o mesmo valor. Ao soltar, o disco encaixa na posição correta.</p>
+                        <div class="inspecao-setas">
+                            <button id="inspecaoMenos" type="button" aria-label="Girar para a esquerda; o número sob a seta aumenta" title="Girar à esquerda aumenta o valor sob a seta">◀ <span>ESQUERDA</span></button>
+                            <button id="inspecaoMais" type="button" aria-label="Girar para a direita; o número sob a seta diminui" title="Girar à direita diminui o valor sob a seta"><span>DIREITA</span> ▶</button>
+                        </div>
+                        <button id="inspecaoConfirmar" class="botao-principal" type="button">USAR ESTE NÚMERO <span>↵</span></button>
+                        <p class="inspecao-nota">A tentativa só é contabilizada quando você pressiona TENTAR ABRIR no painel.</p>
+                    </div>
+                </div>
+                <footer class="inspecao-rodape">EQUIPAMENTO RECUPERADO / DELEGACIA DE RACCOON CITY <span>ESC PARA FECHAR</span></footer>
+            </section>
+        </div>
+
+        <div class="legenda-cenario" aria-hidden="true">
+            <div>
+                <strong id="nomeFaseLegenda">SALA DE ESPERA</strong>
+                <small id="subFaseLegenda">R.P.D. / EAST WING</small>
+            </div>
+        </div>
+
+        <div class="rodape"><span id="rodapeEsquerda">R.P.D. // WAITING ROOM SAFE</span><span>INSPECIONE O DISCO · A / D · ENTER PARA CONFIRMAR</span></div>
+    </main>
+
+    <div id="transicaoFase" class="transicao-fase" hidden aria-live="polite">
+        <div class="transicao-chuva"></div>
+        <div class="transicao-traco"></div>
+        <div class="transicao-miolo">
+            <span class="transicao-codigo">R.P.D. / ACESSO AO PRÓXIMO SETOR</span>
+            <span class="transicao-numeracao" id="transicaoNumero">02 — 03</span>
+            <h2 id="transicaoTitulo">WEST OFFICE</h2>
+            <p id="transicaoSubtitulo">R.P.D. · 1º ANDAR</p>
+            <div class="transicao-barras" id="transicaoBarras"><span></span><span></span><span></span></div>
+        </div>
+        <div class="transicao-rodape">OPERAÇÃO COFRE SECRETO // ARQUIVOS DE RACCOON CITY</div>
+    </div>
+
+    <section id="telaInicial" class="tela-inicial" aria-label="Tela inicial do jogo">
+        <div class="imagem-titulo" aria-hidden="true"></div>
+        <canvas id="rainCanvas" class="rain-canvas" aria-hidden="true"></canvas>
+        <div class="chuva-nevoa" aria-hidden="true"></div>
+        <div id="relampago" class="relampago" aria-hidden="true"></div>
+        <div class="reflexo-policia" aria-hidden="true"></div>
+        <div class="titulo-escuro" aria-hidden="true"></div>
+        <div class="titulo-conteudo">
+            <p class="acima-logo">CAPCOM <span class="linha-curta"></span> RACCOON CITY / 1998</p>
+            <div class="logo-jogo" aria-label="Resident Evil 2">
+                <div class="nome-franquia"><span class="vermelho">R</span>ESIDENT <span class="vermelho">E</span>VIL <span class="numero-dois">2</span></div>
+            </div>
+            <div class="titulo-divider"></div>
+            <p class="subtitulo-logo">COFRE SECRETO <span>—</span> RACCOON POLICE DEPARTMENT</p>
+            <button class="botao-entrar" id="botaoEntrar" type="button">PRESSIONE QUALQUER TECLA</button>
+        </div>
+        <div class="rodape-titulo"><span>UM MINIJOGO DE ADIVINHAÇÃO</span><span>HTML • CSS • JAVASCRIPT</span></div>
+    </section>
+
+    <div id="overview" class="overview" hidden>
+        <section class="caixa-final" role="dialog" aria-modal="true" aria-labelledby="tituloFinal" aria-describedby="textoFinal">
+            <div class="topo-modal"><span class="simbolo-modal" id="simboloFinal">✓</span><span id="cabecalhoFinal">ACESSO AUTORIZADO</span></div>
+            <div class="linha-modal"></div>
+            <div class="selo-arquivo"><span>CONFIDENCIAL</span><span>ARQUIVO R.P.D.</span></div>
+            <p class="modal-categoria">REGISTRO / COFRE</p>
+            <p id="seloCampanha" class="selo-campanha" hidden>MISSÃO CONCLUÍDA · TODOS OS COFRES ABERTOS</p>
+            <h2 id="tituloFinal">COFRE DESBLOQUEADO!</h2>
+            <p id="textoFinal">Você descobriu a senha em 1 tentativa.</p>
+            <div class="resultado-final-grade">
+                <div><span>FASE</span><strong id="finalFase">01 / 03</strong></div>
+                <div><span>TENTATIVAS</span><strong id="finalTentativas">01 / 07</strong></div>
+                <div><span>STATUS</span><strong id="finalStatus">ABERTO</strong></div>
+            </div>
+            <div id="trilhaFases" class="trilha-fases" aria-label="Progresso das fases"></div>
+            <button id="botaoReiniciar" class="botao-principal botao-modal" type="button">PRÓXIMA FASE <span>➜</span></button>
+        </section>
+    </div>
+
+    <audio id="somAmbiente" src="sons/ambiente.wav" preload="none" loop></audio>
+    <audio id="somClique" src="sons/clique.wav" preload="auto"></audio>
+    <audio id="somTentativa" src="sons/tentativa.wav" preload="auto"></audio>
+    <audio id="somErro" src="sons/erro.wav" preload="auto"></audio>
+    <audio id="somDesbloqueio" src="sons/desbloqueio.wav" preload="auto"></audio>
+    <audio id="somPorta" src="sons/ferrolho.wav" preload="auto"></audio>
+    <audio id="somNegado" src="sons/negado.wav" preload="auto"></audio>
+    <audio id="somRoda" src="sons/roda.wav" preload="auto"></audio>
+</body>
+</html>
